@@ -1,6 +1,9 @@
+from json.decoder import JSONDecodeError
 import requests
 import sqlite3
 import json
+
+from recipes import *
 
 headers = {"User-Agent": "Profit analyzer (early development) / Jeere#8533"} # set user agent for request
 conn = sqlite3.connect('database.db') # set connection for sqlite
@@ -56,8 +59,29 @@ def get_data(headers):
     Saves API response to test.json
     """
     response = requests.get("https://prices.runescape.wiki/api/v1/osrs/5m",headers=headers).json()
+    response = response["data"]
+
+    with open('test.json', 'r') as f:
+        try:
+            data = json.load(f)
+        except JSONDecodeError: # Fail and return raw response if file empty
+            return response
+        for key1, dict in response.items():     # Iterate through item IDs in response
+            for key2, value in dict.items():    # Iterate through items
+                if value:                       
+                    try:
+                        data[key1][key2] = value    # Replace value in file with one in response if exists
+                    except KeyError:                # Create new key-value pair if doesn't exist
+                        data[key1] = {}
+                        data[key1][key2] = value
+    return data
+
+def dump_data(data):
+    """
+    Dumps data to json
+    """
     with open('test.json', 'w') as f:
-        json.dump(response, f)
+        json.dump(data, f)
 
 def data2db():
     """
@@ -88,7 +112,13 @@ def data2db():
     conn.close()    # close db
 
 def main(headers):
-    get_data(headers)
+    """
+    Main function
+    """
+    dump_data(get_data(headers))
+    decant = Decant()
+    combine = Combine()
+    decant.get_prices()
 
 if __name__ == "__main__":
     main(headers)

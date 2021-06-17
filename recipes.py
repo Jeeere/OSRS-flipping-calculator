@@ -47,7 +47,7 @@ class Decant():
         prices = self.potions
         with open('test.json', 'r') as f:
             data = json.load(f)
-            items = data["data"]
+            items = data#["data"]
         for key, ids in self.potions.items():
             potion = []
             for dose in ids:
@@ -59,6 +59,16 @@ class Decant():
             prices[key] = potion
             if potion[2][1] and potion[3][0]:
                 self.three_to_four(key, potion[2][1], potion[3][0])
+            if (potion[0][0] and
+                potion[0][1] and
+                potion[1][0] and
+                potion[1][1] and
+                potion[2][0] and
+                potion[2][1] and
+                potion[3][0] and
+                potion[3][1]
+            ):
+                self.max_profit(key,potion[0][0],potion[0][1],potion[1][0],potion[1][1],potion[2][0],potion[2][1],potion[3][0],potion[3][1])
         return
 
     def three_to_four(self, key, s3, b4):
@@ -73,7 +83,7 @@ class Decant():
         else:
             return
 
-    def max_profit(b1, s1, b2, s2, b3, s3, b4, s4):
+    def max_profit(self, key, b1, s1, b2, s2, b3, s3, b4, s4):
         """
         Calculate maximum profit possible from decanting
         """
@@ -89,7 +99,11 @@ class Decant():
                 mins = [sppd[n], n+1]
         margin = maxb[0] * maxb[1]*(mins[1]/4)-mins[0]*mins[1]
         profit = int(margin * 2000)
-        return margin, profit
+        if profit >= self.profit_threshold:
+            print(key + " potions have a max profit of " + f'{profit:,}' + " with Buy " + str(mins[1]) + "-dose: " + f'{mins[0]:,}' + " Sell " + str(maxb[1]) + "-dose: " + f'{maxb[0]:,}')
+            return profit, mins[1], mins[0], maxb[1], maxb[0]
+        else:
+            return
 
 class Cleaning():
     """
@@ -105,7 +119,7 @@ class Combine():
     def __init__(self):
         self.profit_threshold = 100000
 
-        items = { # "Product": [Product, part1, part2, ...]
+        self.items = { # "Product": [Product, part1, part2, ...]
             # Wards
             "Malediction": [11924,11931,11932,11933],
             "Odium": [11926,11928,11929,11930],
@@ -207,6 +221,20 @@ class Combine():
         }
     
     def get_prices(self):
+        prices = self.items # Copy dict to change IDs into prices
+        with open('test.json', 'r') as f:
+            data = json.load(f)
+            items = data#["data"]
+        for key, ids in prices.items(): # Iterate through dict
+            lst = []            # New list to replace one in dictionary
+            for n in ids:       # Iterate through list in dict
+                try:
+                    lst.append((items[str(n)]["avgHighPrice"], items[str(n)]["avgLowPrice"]))
+                except KeyError:
+                    lst.append((None, None))
+                    continue
+            prices[key] = lst
+        print(prices)
         return
 
     def combine_profit(self):

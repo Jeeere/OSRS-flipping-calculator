@@ -1,5 +1,5 @@
 import json
-from recipes import Decant
+from recipes import Combine, Decant
 
 def main(b1,s1,b2,s2,b3,s3,b4,s4):
     bppd = [b1, int(b2/2), int(b3/3), int(b4/4)]
@@ -82,4 +82,18 @@ potions = {#"Potion":  [1dose,2dose,3dose,4dose],
 #     print("n")
 
 decant = Decant()
-decant.get_prices()
+#decant.get_prices()
+
+combine = Combine()
+#combine.get_prices()
+
+new = {}
+with open('test.json', 'r') as f:
+            data = json.load(f)
+            for key1, dict in data.items():
+                new[key1] = {}
+                for key2, value in dict.items():
+                    if value:
+                        new[key1][key2] = value
+            
+
