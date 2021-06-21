@@ -2,8 +2,11 @@ from json.decoder import JSONDecodeError
 import requests
 import sqlite3
 import json
+import timeit
 
 from recipes import *
+from settings import *
+import functions as fn
 
 headers = {"User-Agent": "Profit analyzer (early development) / Jeere#8533"} # set user agent for request
 conn = sqlite3.connect('database.db') # set connection for sqlite
@@ -34,25 +37,6 @@ def initialize_tables():
                 lowPriceVolume integer,
                 timestamp integer
                 )""")
-
-def reset_mapping():
-    """
-    Gets new mapping information and replaces old
-    """
-    response = requests.get("https://prices.runescape.wiki/api/v1/osrs/mapping",headers=headers).json()
-    for item in response:
-        c.execute("INSERT INTO mapping VALUES (:id, :examine, :members, :lowAlch, :buyLimit, :value, :highAlch, :icon, :name)", {
-                    'id': item["id"],
-                    'examine': item["examine"],
-                    'members': item["members"],
-                    'lowAlch': item["lowalch"],
-                    'buyLimit': item["limit"],
-                    'value': item["value"],
-                    'highAlch': item["highalch"],
-                    'icon': item["icon"],
-                    'name': item["name"]
-                    })
-        conn.commit()
 
 def get_data(headers):
     """
@@ -111,14 +95,27 @@ def data2db():
     conn.commit()   # commit changes to db
     conn.close()    # close db
 
+#########################################
 def main(headers):
     """
     Main function
     """
+    settings = Settings()
+    #fn.reset_mapping(headers)
     dump_data(get_data(headers))
-    decant = Decant()
-    combine = Combine()
-    decant.get_prices()
+    decant = Decant(settings)
+    combine = Combine(settings)
+    pay = Pay(settings)
+    print  ('##################################################')
+    print  ("##############      UNF PROFIT      ##############\n" + str(pay.unfinished_potions_profit()))
+    print  ("##############     CRUSH PROFIT     ##############\n" + str(pay.crush_profit()))
+    print  ("############## 3 TO 4 DECANT PROFIT ##############\n" + str(decant.three_to_four()))
+    print  ("##############  MAX DECANT PROFIT   ##############\n" + str(decant.max_profit()))
+    print  ("##############  MAX COMBINE PROFIT  ##############\n" + str(combine.combine_profit()))
+    print  ("##############     FLIP PROFIT      ##############\n" + str(fn.get_flip_profit(settings)))
 
+#########################################
 if __name__ == "__main__":
+    start = timeit.default_timer()
     main(headers)
+    print('##################################################\nTime: ', timeit.default_timer() - start)  
