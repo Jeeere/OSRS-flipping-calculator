@@ -44,14 +44,14 @@ class Decant():
         """
         profits = []
         for key, value in self.prices.items():  # Loop through prices dictionary
-            s3 = value[2][1]    # Grab 3 and 4 dose prices
+            s3 = value[2][1]                    # Grab 3 and 4 dose prices
             b4 = value[3][0]
-            if s3 and b4:       # Check that prices are valid
+            if s3 and b4:                       # Check that prices are valid
                 pass
             else:
                 continue
-            margin = b4 * 0.75 - s3     # Calculate margin
-            profit = int(margin * 2000) # Calculate profit
+            margin = b4 * 0.75 - s3             # Calculate margin
+            profit = int(margin * 2000)         # Calculate profit
 
             if profit >= self.settings.decant_profit_threshold:     # If profit crosses threshold append in dictionary to result list
                 add = {"ids": [self.potions[key][2], self.potions[key][3]], "prices": [b4, s3], "limit": 2000, "margin": int(margin), "profit": profit, "roi": fn.get_roi(s3+margin, s3)}
@@ -65,43 +65,43 @@ class Decant():
         """
         profits = []
 
-        for key, value in self.prices.items():
+        for key, value in self.prices.items():      # Loop through items in price dictionary
             bppd = []
             sppd = []
-            for n in range(4):
-                try:
+            for n in range(4):                      # Create lists for prices per dose for buy and sell prices.
+                try:                                # Try for inactive price
                     bppd.append(value[n][0]/(n+1))
                 except TypeError:
                     bppd.append(None)
-                try:
+                try:                                # Try for inactive price
                     sppd.append(value[n][1]/(n+1))
                 except TypeError:
                     sppd.append(None)
 
-            for n in bppd:
+            for n in bppd:                          # Loop through created list bppd
+                if n:                               # When first valid price found
+                    maxb = [n, bppd.index(n)]       # Set as starting price and dose
+            for n in sppd:                          # Repeat for sppd
                 if n:
-                    maxb = [n, bppd.index(n)]
-            for n in sppd:
-                if n:
-                    mins = [n, sppd.index(n)] # Set preliminary max and min prices for potion as well as dose
+                    mins = [n, sppd.index(n)]
 
-            for n in range(0,4):    # Find highest price per dose. n: index of potion dose in ID list
-                if not bppd[n]:
+            for n in range(0,4):                    # Find highest price per dose. n: index of potion dose in ID list
+                if not bppd[n]:                     # Ignore inactive price
                     continue
-                elif bppd[n] > maxb[0]:
-                    maxb = [bppd[n], n]
-            for n in range(0,4):    # Find lowest price per dose
-                if not sppd[n]:
+                elif bppd[n] > maxb[0]:             # If value higher than current highest
+                    maxb = [bppd[n], n]             # Set as new highest
+            for n in range(0,4):                    # Find lowest price per dose. n: index of potion dose in ID list
+                if not sppd[n]:                     # Ignore inactive price
                     continue
-                elif sppd[n] < mins[0]:
-                    mins = [sppd[n], n]
+                elif sppd[n] < mins[0]:             # If value higher than current highest
+                    mins = [sppd[n], n]             # Set as new lowest
 
             margin = maxb[0] * (maxb[1]+1)*((mins[1]+1)/4)-mins[0]*(mins[1]+1)  # Calculate profit margin
-            profit = int(margin * 2000) # Calculate profit
+            profit = int(margin * 2000)                                         # Calculate profit
 
-            if profit >= self.settings.decant_profit_threshold:
+            if profit >= self.settings.decant_profit_threshold:                 # If set conditions are met:
                 add = {"ids": [self.potions[key][mins[1]], self.potions[key][maxb[1]]], "prices": [int(maxb[0]*(maxb[1]+1)), int(mins[0]*(mins[1]+1))], "limit": 2000, "margin": int(margin), "profit": profit, "roi": fn.get_roi(int(mins[0]*(mins[1]+1))+int(margin),int(mins[0]*(mins[1]+1)))}
-                profits.append(add)
+                profits.append(add)                                             # Add flip to returning list
 
         return profits
 
@@ -231,21 +231,21 @@ class Combine():
         """
         Calculate profits for combine operations
         """
-        prices = fn.get_prices(self.items.copy())
-        profits = []
-        for set in prices.items():
-            if None in set[1]:
+        prices = fn.get_prices(self.items.copy())               # Get prices dictionary
+        profits = []                                            # Create returning list
+        for set in prices.items():                              # Loop through item sets in prices dictionary
+            if None in set[1]:                                  # If set includes inactive price:
                 continue
-            margin = set[1][0] - sum(set[1][1:])
-            limit = fn.get_min_limit(self.items[set[0]][1:])
-            if not limit:   # If no buy limit
+            margin = set[1][0] - sum(set[1][1:])                # Calculate margin
+            limit = fn.get_min_limit(self.items[set[0]][1:])    # Get smallest buy limit in item set
+            if not limit:                                       # If no buy limit:
                 profit = None
             else:
-                profit = limit * margin
-            if (profit == None or profit >= self.settings.combine_profit_threshold) and margin >= self.settings.combine_margin_threshold:
-                roi = fn.get_roi(set[1][0], sum(set[1][1:]))
+                profit = limit * margin                         # Calculate profit
+            if (profit == None or profit >= self.settings.combine_profit_threshold) and margin >= self.settings.combine_margin_threshold:   # If set conditions are met:
+                roi = fn.get_roi(set[1][0], sum(set[1][1:]))                                                                                # Calculate return fo investment
                 add = {"ids": self.items[set[0]], "prices": prices[set[0]], "limit": limit, "margin": margin, "profit": profit, "roi": roi}
-                profits.append(add)
+                profits.append(add)                                                                                                         # Add flip to returning list
             
         return profits
 
@@ -288,32 +288,32 @@ class Pay():
         }
 
         # Get prices
-        self.unfs_prices = fn.get_prices(self.unfs.copy())
-        self.crush_prices = fn.get_prices(self.crush.copy())
+        self.unfs_prices = fn.get_prices(self.unfs.copy())      # Get price dictrionary for unfinished potions
+        self.crush_prices = fn.get_prices(self.crush.copy())    # Get price dictrionary for crushing
 
     def get_service_profit(self, service):
         """
         Function for calculating profits for wanted service
             str service: "unf", "crush"
         """
-        profits = []
-        if service == "unf":
-            cost = 200
-            x = self.unfs_prices.items()
-            y = self.unfs
-            z = self.settings.unf_profit_threshold
+        profits = []                                        # Create returning list
+        if service == "unf":                                # Set variables according to service selection
+            cost = 200                                      # Set service cost
+            x = self.unfs_prices.items()                    # Set price dictionary
+            y = self.unfs                                   # Set item ID dictionary
+            z = self.settings.unf_profit_threshold          # Set profit threshold
         elif service == "crush":
             cost = 50
             x = self.crush_prices.items()
             y = self.crush
             z = self.settings.crush_profit_threshold
         else:
-            return 1
-        for key, prices in x:
-            margin = prices[0] - (sum(prices[1:]) + cost)
-            limit = fn.get_min_limit(y[key][1:])
-            profit = margin * limit
-            if profit >= z:
+            return 1                                        # If invalid service, return 1
+        for key, prices in x:                               # Loop through price dictionary
+            margin = prices[0] - (sum(prices[1:]) + cost)   # Calculate margin
+            limit = fn.get_min_limit(y[key][1:])            # Get smallest buy limit
+            profit = margin * limit                         # Calculate profit
+            if profit >= z:                                 # If set conditions are met add flip to returning list
                 profits.append({"ids": y[key], "prices": prices, "limit": limit, "margin": margin, "profit": profit, "roi": fn.get_roi(prices[0], (sum(prices[1:]) + cost))})
         return profits
 
@@ -330,27 +330,27 @@ class Repair():
             "legs":     [[4714,4878],[4722,4902],[4730,4926],[4738,4950],[4751,4974],[4759,4998]],
             "weapon":   [[4710,4866],[4718,4890],[4726,4914],[4734,4938],[4747,4962],[4755,4986]]
         }
-        self.prices = fn.get_prices(self.items.copy(), nested=True)
+        self.prices = fn.get_prices(self.items.copy(), nested=True) # Get price dictionary for items
 
     def repair_profit(self, lvl):
         """
-        Calculates profir for repairing barrows items
+        Calculates profit for repairing barrows items
             int lvl: smithing level used to repair
         """
-        profits = []
-        limit = 15
-        for key, value in self.prices.items():
-            cost = self.get_repair_cost(lvl, key)
+        profits = []                                        # Create returning list
+        limit = 15                                          # Set buy limit
+        for key, value in self.prices.items():              # Loop through prices dictionary
+            cost = self.get_repair_cost(lvl, key)           # Calculate repair cost for piece
 
-            x = 0
-            for brother in value:
-                margin = brother[0] - brother[1] - cost
-                profit = margin * limit
+            x = 0                                           # Reset element index
+            for brother in value:                           # Loop through different brothers in item category
+                margin = brother[0] - brother[1] - cost     # Calculate profit margin
+                profit = margin * limit                     # Calculate profit
 
-                if profit >= self.settings.repair_profit_threshold and margin >= self.settings.repair_margin_threshold:
+                if profit >= self.settings.repair_profit_threshold and margin >= self.settings.repair_margin_threshold: # If set conditions are met add flip to returning list
                     profits.append({"ids": self.items[key][x], "prices": brother, "limit": limit, "margin": int(margin), "profit": int(profit), "roi": fn.get_roi(brother[0], (brother[1] - cost))})
 
-                x = x+1
+                x = x+1                                     # Raise index
         return profits
 
     def get_repair_cost(self, lvl, piece):
@@ -359,11 +359,11 @@ class Repair():
             int lvl: smithing level used to repair
             str piece: "helmet", "body", "legs", "weapon"
         """
-        pieces = {
+        pieces = {                              # Set npc repair costs for each category
             "helmet": 60000,
             "body": 90000,
             "legs": 80000,
             "weapon": 100000
         }
-        cost = pieces[piece] * (1 - lvl / 200)
-        return cost
+        cost = pieces[piece] * (1 - lvl / 200)  # Calculate repair cost with smithing level
+        return cost                             # Return cost
