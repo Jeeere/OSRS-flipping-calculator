@@ -205,17 +205,9 @@ items = { # "Product": [Product, part1, part2, ...]
             "Dagonhai": [24333,24288,24291,24294]
         }
 
-for set in items.items():
-    print(set[1][0])
-    print(set[1][1:])
-    print(sum(set[1][1:]))
+x = [123,345,678]
+y = [[23,45],[67,89]]
 
-    lst = [1,6,56,4]
-    for n in lst:
-        print("----")
-        print(n)
-        #print(lst[n-1])
-
-x = []
-if not x[0]:
-    print("gay")
+for n in x:
+    for m in n:
+        print(m)

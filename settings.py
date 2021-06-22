@@ -17,4 +17,9 @@ class Settings():
         self.combine_margin_threshold = 60000
 
         # Pay settings
-        self.pay_profit_threshold = 250000
+        self.crush_profit_threshold = 250000
+        self.unf_profit_threshold = 250000
+
+        # Repair settings
+        self.repair_profit_threshold = 250000
+        self.repair_margin_threshold = 50000

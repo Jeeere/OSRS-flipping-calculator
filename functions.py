@@ -132,7 +132,7 @@ def get_roi(high, low):
     except TypeError:
         return None
 
-def get_prices(prices, all=False):
+def get_prices(prices, all=False, nested=False):
     """
     Replaces dictionary of ids with dictionary of prices.
         prices: {[highPrice, lowPrice, lowPrice, ...],[...],[...]}
@@ -145,18 +145,30 @@ def get_prices(prices, all=False):
     for key, ids in prices.items():     # Iterate through given dict
         lst = []                        # New list to replace one in dictionary
         for n in ids:                   # Iterate through list in dict
-            try:
-                if all:
-                    lst.append((data[str(n)]["avgHighPrice"], data[str(n)]["avgLowPrice"]))
-                elif not all and n == ids[0]:         # If first element in list get high price
-                    lst.append((data[str(n)]["avgHighPrice"]))
-                elif not all:                   # Else get low price
-                    lst.append((data[str(n)]["avgLowPrice"]))
-            except KeyError:            # If inactive append None
-                if not all:
-                    lst.append(None)
-                elif all:
-                    lst.append((None, None))
+            if nested:
+                lst2 = []
+                for m in n:
+                    get_prices_2(m, all, lst2, n, data)
+                lst.append(lst2)
+            else:
+                get_prices_2(n, all, lst, ids, data)
+            
         prices[key] = lst               # Update returning dict with fetched information
 
     return prices
+
+def get_prices_2(n, all, lst, ids, data):
+    try:
+        if all:
+            lst.append((data[str(n)]["avgHighPrice"], data[str(n)]["avgLowPrice"]))
+        elif not all and n == ids[0]:         # If first element in list get high price
+            lst.append((data[str(n)]["avgHighPrice"]))
+        elif not all:                   # Else get low price
+            lst.append((data[str(n)]["avgLowPrice"]))
+    except KeyError:            # If inactive append None
+        if not all:
+            lst.append(None)
+        elif all:
+            lst.append((None, None))
+
+    return lst

@@ -106,13 +106,15 @@ def main(headers):
     decant = Decant(settings)
     combine = Combine(settings)
     pay = Pay(settings)
+    repair = Repair(settings)
     print  ('##################################################')
-    print  ("##############      UNF PROFIT      ##############\n" + str(pay.unfinished_potions_profit()))
-    print  ("##############     CRUSH PROFIT     ##############\n" + str(pay.crush_profit()))
+    print  ("##############      UNF PROFIT      ##############\n" + str(pay.get_service_profit("unf")))
+    print  ("##############     CRUSH PROFIT     ##############\n" + str(pay.get_service_profit("crush")))
     print  ("############## 3 TO 4 DECANT PROFIT ##############\n" + str(decant.three_to_four()))
     print  ("##############  MAX DECANT PROFIT   ##############\n" + str(decant.max_profit()))
     print  ("##############  MAX COMBINE PROFIT  ##############\n" + str(combine.combine_profit()))
     print  ("##############     FLIP PROFIT      ##############\n" + str(fn.get_flip_profit(settings)))
+    print  ("##############    REPAIR PROFIT     ##############\n" + str(repair.repair_profit(99)))
 
 #########################################
 if __name__ == "__main__":

@@ -15,7 +15,6 @@ class Decant():
                     "Bastion":      [22470,22467,22464,22461],
                     "Battlemage":   [22458,22455,22452,22449],
                     "Combat":       [9745,9743,9741,9739],
-                    #"Compost":      [6476,6474,6472,6470],
                     "Defence":      [137,135,133,2432],
                     "Divine bastion":     [24644,24641,24638,24635],
                     "Divine battlemage":  [24632,24629,24626,24623],
@@ -38,27 +37,6 @@ class Decant():
                     "Super combat":      [12701,12699,12697,12695]}
         
         self.prices = fn.get_prices(self.potions.copy(), all=True)
-
-    # def get_prices(self):
-    #     """
-    #     Get prices for all tradeable potions
-    #     ids: list of ids to fetch prices for
-    #     """
-    #     self.prices = self.potions.copy()
-    #     with open('test.json', 'r') as f:   # Fetch 
-    #         data = json.load(f)
-        
-    #     for key, ids in self.potions.items():
-    #         potion = []
-    #         for dose in ids:
-    #             try:
-    #                 potion.append((data[str(dose)]["avgHighPrice"], data[str(dose)]["avgLowPrice"]))
-    #             except KeyError:
-    #                 potion.append((None, None))
-    #                 continue
-    #         self.prices[key] = potion # Replace IDs with prices in dictionary
-
-    #     return
 
     def three_to_four(self):
         """
@@ -248,28 +226,6 @@ class Combine():
             "Ancestral": [21049,21018,21021,21024],
             "Dagonhai": [24333,24288,24291,24294]
         }
-    
-    # def get_prices(self):
-    #     """
-        
-    #     """
-    #     prices = self.items.copy() # Copy dict to change IDs into prices
-    #     with open('test.json', 'r') as f:
-    #         data = json.load(f)
-    #     for key, ids in prices.items(): # Iterate through dict
-    #         lst = []            # New list to replace one in dictionary
-    #         for n in ids:       # Iterate through list in dict
-    #             try:
-    #                 if n == 0:
-    #                     lst.append((data[str(n)]["avgHighPrice"]))
-    #                 else:
-    #                     lst.append((data[str(n)]["avgLowPrice"]))
-    #             except KeyError:
-    #                 lst.append(None)
-    #                 continue
-    #         prices[key] = lst
-
-    #     return prices
 
     def combine_profit(self):
         """
@@ -292,21 +248,6 @@ class Combine():
                 profits.append(add)
             
         return profits
-    
-    # def get_limit(self, ids):
-    #     """
-    #     Get smallest buy limit out of needed items
-    #         ids: list of item ids
-    #     """
-    #     data = fn.get_metadata(ids, limit=True)
-    #     limit_dicts = list(data.values())
-    #     limits = []
-    #     for dict in limit_dicts:
-    #         limits.append(dict["limit"])
-    #     if None in limits:
-    #         return None
-    #     else:
-    #         return min(limits)
 
 class Pay():
     """
@@ -350,26 +291,31 @@ class Pay():
         self.unfs_prices = fn.get_prices(self.unfs.copy())
         self.crush_prices = fn.get_prices(self.crush.copy())
 
-    def unfinished_potions_profit(self):
+    def get_service_profit(self, service):
         """
-        Function for calculating profits for creating unfinished potions with zahur
+        Function for calculating profits for wanted service
+            str service: "unf", "crush"
         """
         profits = []
-        cost = 200
-        for key, prices in self.unfs_prices.items():
+        if service == "unf":
+            cost = 200
+            x = self.unfs_prices.items()
+            y = self.unfs
+            z = self.settings.unf_profit_threshold
+        elif service == "crush":
+            cost = 50
+            x = self.crush_prices.items()
+            y = self.crush
+            z = self.settings.crush_profit_threshold
+        else:
+            return 1
+        for key, prices in x:
             margin = prices[0] - (sum(prices[1:]) + cost)
-            limit = fn.get_min_limit(self.unfs[key][1:])
+            limit = fn.get_min_limit(y[key][1:])
             profit = margin * limit
-            if profit >= self.settings.pay_profit_threshold:
-                profits.append({"ids": self.unfs[key], "prices": prices, "limit": limit, "margin": margin, "profit": profit, "roi": fn.get_roi(prices[0], (sum(prices[1:]) + cost))})
+            if profit >= z:
+                profits.append({"ids": y[key], "prices": prices, "limit": limit, "margin": margin, "profit": profit, "roi": fn.get_roi(prices[0], (sum(prices[1:]) + cost))})
         return profits
-
-    def crush_profit(self):
-        """
-        Function for calculating profits for crushing items with wesley
-        """
-        cost = 50
-        return
 
 class Repair():
     """
@@ -378,6 +324,46 @@ class Repair():
     def __init__(self, settings):
         self.settings = settings
 
-        items = {
-
+        self.items = {#     Ahrim      Dharok       Guthan      Karil       Torag       Verac
+            "helmet":   [[4708,4860],[4716,4884],[4724,4908],[4732,4932],[4745,4956],[4753,4980]],
+            "body":     [[4712,4872],[4720,4896],[4728,4920],[4736,4944],[4749,4968],[4757,4992]],
+            "legs":     [[4714,4878],[4722,4902],[4730,4926],[4738,4950],[4751,4974],[4759,4998]],
+            "weapon":   [[4710,4866],[4718,4890],[4726,4914],[4734,4938],[4747,4962],[4755,4986]]
         }
+        self.prices = fn.get_prices(self.items.copy(), nested=True)
+
+    def repair_profit(self, lvl):
+        """
+        Calculates profir for repairing barrows items
+            int lvl: smithing level used to repair
+        """
+        profits = []
+        limit = 15
+        for key, value in self.prices.items():
+            cost = self.get_repair_cost(lvl, key)
+
+            x = 0
+            for brother in value:
+                margin = brother[0] - brother[1] - cost
+                profit = margin * limit
+
+                if profit >= self.settings.repair_profit_threshold and margin >= self.settings.repair_margin_threshold:
+                    profits.append({"ids": self.items[key][x], "prices": brother, "limit": limit, "margin": int(margin), "profit": int(profit), "roi": fn.get_roi(brother[0], (brother[1] - cost))})
+
+                x = x+1
+        return profits
+
+    def get_repair_cost(self, lvl, piece):
+        """
+        Calculates repair cost of barrows item
+            int lvl: smithing level used to repair
+            str piece: "helmet", "body", "legs", "weapon"
+        """
+        pieces = {
+            "helmet": 60000,
+            "body": 90000,
+            "legs": 80000,
+            "weapon": 100000
+        }
+        cost = pieces[piece] * (1 - lvl / 200)
+        return cost
